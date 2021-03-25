@@ -1,53 +1,32 @@
+// lcd1602.c
+// kompajlirati sa -lwiringPi -lwiringPiDev
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <bcm2835.h>
-#include <lirc/lirc_client.h>
+#include <errno.h>
+#include <wiringPi.h>
+#include <lcd.h>
+// dodela vrednosti za konkretne pinove
+// prema gornjoj tabeli i semi DVK512
+const int RS = 3;
+const int EN = 14;
+const int D0 = 4;
+const int D1 = 12;
+const int D2 = 13;
+const int D3 = 6;
+int main(){
+int lcd_h;
+if (wiringPiSetup() < 0){
+ fprintf (stderr, "Greška pri inicijalizaciji:
+%s\n", strerror (errno)) ;
+ return 1 ;
+}
+lcd_h = lcdInit(2, 16, 4, RS, EN, D0, D1, D2,
+D3, D0, D1, D2, D3);
 
-int main(int argc, char **argv)
-{
-	struct lirc_config *config;
-	char *code;
-
-	//startuj lirc
-	if(lirc_init("lirc",1)==-1)
-		return 1;
- 
-	if (!bcm2835_init())
-		return 2;
- 	// Setuj PIN kao izlazni
- 	bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
-	
-	//procitaj /etc/lirc/lirc/lircrc/lircd.conf
-	if(lirc_readconfig(NULL, &config,NULL)==0)
-	{
-	//radimo dok je LIRC soket otvoren 0=otvoren -1=zatvoren
-		while (lirc_nextcode(&code)==0)
-		{
-			// if code=NULL ništa nije primljeno-preskoči
-			if(code==NULL) continue; 
-			{
-				bcm2835_delay(400);
-				if (strstr(code,"KEY_0"))
-				{
-					printf("KEY0\n");
-					// iskljuci
-					bcm2835_gpio_write(PIN, LOW);
-					bcm2835_delay(500);
-				}
-				else if (strstr(code,"KEY_1"))
-				{
-					printf("KEY1\n");
-					// ukljuci
-					bcm2835_gpio_write(PIN, HIGH);
-					bcm2835_delay(500);
-				}
-			}
-			free(code);
-		}
-		lirc_freeconfig(config);
-	}
-	lirc_deinit();
- 	bcm2835_close();
- 	return 0;
+lcdPosition(lcd_h, 0,0);
+lcdPrintf(lcd_h,"Displej sa 16 ch");
+lcdPosition(lcd_h, 0,1);
+lcdPrintf(lcd_h, "u 2 reda");
+delay(2000);
+lcdClear(lcd_h);
 }
